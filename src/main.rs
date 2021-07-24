@@ -1,9 +1,13 @@
-use iced::{executor, Application, Command, Error};
+mod cli;
+
+use iced::{button, executor, Application, Command, Error, Image, Row, Settings, Text};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
     playlist: Playlist,
+    next_img_button: button::State,
+    prev_img_button: button::State,
 }
 
 #[derive(Debug, Clone)]
@@ -24,10 +28,13 @@ impl Playlist {
     }
     pub fn next(&mut self) -> &Path {
         self.pos = (self.pos + 1) % self.sources.len();
-        &self.sources[self.pos]
+        &self.sources[self.pos % self.sources.len()]
     }
     pub fn current(&self) -> &Path {
         &self.sources[self.pos]
+    }
+    pub fn pos_delta(&mut self, d: isize) {
+        self.pos = (self.pos as isize + d) as usize % self.sources.len();
     }
 }
 
@@ -36,10 +43,16 @@ impl Application for Yume {
 
     type Message = Message;
 
-    type Flags = ();
+    type Flags = Playlist;
 
-    fn new(_: Self::Flags) -> (Self, iced::Command<Self::Message>) {
-        (Self::default(), Command::none())
+    fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+        (
+            Self {
+                playlist: flags,
+                ..Self::default()
+            },
+            Command::none(),
+        )
     }
 
     fn title(&self) -> String {
@@ -48,18 +61,38 @@ impl Application for Yume {
 
     fn update(
         &mut self,
-        _: Self::Message,
+        message: Self::Message,
         _: &mut iced::Clipboard,
     ) -> iced::Command<Self::Message> {
-        // todo
+        match message {
+            Message::NextImg => self.playlist.pos_delta(1),
+            Message::PrevImg => self.playlist.pos_delta(-1),
+        };
         Command::none()
     }
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
-        todo!()
+        Row::new()
+            .push(
+                button::Button::new(&mut self.prev_img_button, Text::new("<"))
+                    .on_press(Message::PrevImg),
+            )
+            .push(Image::new(self.playlist.current()))
+            .push(
+                button::Button::new(&mut self.next_img_button, Text::new(">"))
+                    .on_press(Message::NextImg),
+            )
+            .into()
     }
 }
 
 fn main() -> Result<(), Error> {
-    Yume::run(Default::default())
+    let images = cli::app()
+        .get_matches()
+        .values_of("image")
+        .unwrap()
+        .map(Into::into)
+        .collect();
+    let playlist = Playlist::new(images);
+    Yume::run(Settings::with_flags(playlist))
 }
