@@ -1,6 +1,8 @@
 mod cli;
 
-use iced::{button, executor, keyboard, Application, Command, Error, Image, Row, Settings, Text};
+use iced::{
+    button, executor, keyboard, Application, Command, Error, Image, Row, Settings, Space, Text,
+};
 use iced_native::subscription;
 use std::path::{Path, PathBuf};
 
@@ -91,11 +93,14 @@ impl Application for Yume {
                 button::Button::new(&mut self.prev_img_button, Text::new("<"))
                     .on_press(Message::PrevImg),
             )
+            .push(Space::with_width(iced::Length::Fill))
             .push(Image::new(self.playlist.current()))
+            .push(Space::with_width(iced::Length::Fill))
             .push(
                 button::Button::new(&mut self.next_img_button, Text::new(">"))
                     .on_press(Message::NextImg),
             )
+            .align_items(iced::Align::Center)
             .into()
     }
 }
