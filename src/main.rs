@@ -1,6 +1,7 @@
 mod cli;
 
-use iced::{button, executor, Application, Command, Error, Image, Row, Settings, Text};
+use iced::{button, executor, keyboard, Application, Command, Error, Image, Row, Settings, Text};
+use iced_native::subscription;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Default)]
@@ -69,6 +70,19 @@ impl Application for Yume {
             Message::PrevImg => self.playlist.pos_delta(-1),
         };
         Command::none()
+    }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        // todo: move keyboard input handling to `Message`
+        subscription::events_with(|ev, _| match ev {
+            iced_native::Event::Keyboard(keyboard::Event::CharacterReceived(',')) => {
+                Some(Message::PrevImg)
+            }
+            iced_native::Event::Keyboard(keyboard::Event::CharacterReceived('.')) => {
+                Some(Message::NextImg)
+            }
+            _ => None,
+        })
     }
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
