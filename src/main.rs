@@ -1,10 +1,11 @@
 mod cli;
+mod playlist;
 
 use iced::{
     button, executor, keyboard, Application, Command, Error, Image, Row, Settings, Space, Text,
 };
 use iced_native::subscription;
-use std::path::{Path, PathBuf};
+use crate::playlist::Playlist;
 
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
@@ -17,28 +18,6 @@ pub struct Yume {
 pub enum Message {
     NextImg,
     PrevImg,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Playlist {
-    pub sources: Vec<PathBuf>,
-    pub pos: usize,
-}
-
-impl Playlist {
-    pub fn new(sources: Vec<PathBuf>) -> Self {
-        Self { sources, pos: 0 }
-    }
-    pub fn next(&mut self) -> &Path {
-        self.pos = (self.pos + 1) % self.sources.len();
-        &self.sources[self.pos % self.sources.len()]
-    }
-    pub fn current(&self) -> &Path {
-        &self.sources[self.pos]
-    }
-    pub fn pos_delta(&mut self, d: isize) {
-        self.pos = (self.pos as isize + d) as usize % self.sources.len();
-    }
 }
 
 impl Application for Yume {
@@ -68,8 +47,8 @@ impl Application for Yume {
         _: &mut iced::Clipboard,
     ) -> iced::Command<Self::Message> {
         match message {
-            Message::NextImg => self.playlist.pos_delta(1),
-            Message::PrevImg => self.playlist.pos_delta(-1),
+            Message::NextImg => self.playlist.advance(1),
+            Message::PrevImg => self.playlist.advance(-1),
         };
         Command::none()
     }
