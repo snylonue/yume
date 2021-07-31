@@ -1,15 +1,14 @@
 mod cli;
 mod playlist;
 
-use iced::{
-    executor, keyboard, Application, Command, Error, Image, Row, Settings,
-};
+use iced::{Application, Command, Error, Row, Settings, executor, image::{self, Viewer, viewer}, keyboard};
 use iced_native::subscription;
 use crate::playlist::Playlist;
 
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
     playlist: Playlist,
+    viewer: viewer::State,
 }
 
 #[derive(Debug, Clone)]
@@ -66,7 +65,7 @@ impl Application for Yume {
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         Row::new()
-            .push(Image::new(self.playlist.current()))
+            .push(Viewer::new(&mut self.viewer, image::Handle::from_path(self.playlist.current())))
             .align_items(iced::Align::Center)
             .into()
     }
