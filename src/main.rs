@@ -2,7 +2,7 @@ mod cli;
 mod playlist;
 
 use iced::{
-    button, executor, keyboard, Application, Command, Error, Image, Row, Settings, Space, Text,
+    executor, keyboard, Application, Command, Error, Image, Row, Settings,
 };
 use iced_native::subscription;
 use crate::playlist::Playlist;
@@ -10,8 +10,6 @@ use crate::playlist::Playlist;
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
     playlist: Playlist,
-    next_img_button: button::State,
-    prev_img_button: button::State,
 }
 
 #[derive(Debug, Clone)]
@@ -68,17 +66,7 @@ impl Application for Yume {
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         Row::new()
-            .push(
-                button::Button::new(&mut self.prev_img_button, Text::new("<"))
-                    .on_press(Message::PrevImg),
-            )
-            .push(Space::with_width(iced::Length::Fill))
             .push(Image::new(self.playlist.current()))
-            .push(Space::with_width(iced::Length::Fill))
-            .push(
-                button::Button::new(&mut self.next_img_button, Text::new(">"))
-                    .on_press(Message::NextImg),
-            )
             .align_items(iced::Align::Center)
             .into()
     }
