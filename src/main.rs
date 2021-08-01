@@ -5,7 +5,7 @@ use crate::playlist::Playlist;
 use iced::{
     executor,
     image::{self, viewer, Viewer},
-    keyboard, Application, Command, Error, Settings, Text,
+    keyboard, Application, Command, Container, Error, Settings, Text,
 };
 use iced_native::subscription;
 
@@ -69,7 +69,15 @@ impl Application for Yume {
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self.playlist.current() {
-            Some(curr) => Viewer::new(&mut self.viewer, image::Handle::from_path(curr)).into(),
+            Some(curr) => Container::new(Viewer::new(
+                &mut self.viewer,
+                image::Handle::from_path(curr),
+            ))
+            .width(iced::Length::Fill)
+            .height(iced::Length::Fill)
+            .center_x()
+            .center_y()
+            .into(),
             None => Text::new("No image")
                 .size(32)
                 .width(iced::Length::Fill)
