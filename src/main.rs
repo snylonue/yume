@@ -1,9 +1,13 @@
 mod cli;
 mod playlist;
 
-use iced::{Application, Command, Error, Row, Settings, executor, image::{self, Viewer, viewer}, keyboard};
-use iced_native::subscription;
 use crate::playlist::Playlist;
+use iced::{
+    executor,
+    image::{self, viewer, Viewer},
+    keyboard, Application, Command, Error, Settings, Text,
+};
+use iced_native::subscription;
 
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
@@ -64,10 +68,16 @@ impl Application for Yume {
     }
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
-        Row::new()
-            .push(Viewer::new(&mut self.viewer, image::Handle::from_path(self.playlist.current())))
-            .align_items(iced::Align::Center)
-            .into()
+        match self.playlist.current() {
+            Some(curr) => Viewer::new(&mut self.viewer, image::Handle::from_path(curr)).into(),
+            None => Text::new("No image")
+                .size(32)
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .vertical_alignment(iced::VerticalAlignment::Center)
+                .horizontal_alignment(iced::HorizontalAlignment::Center)
+                .into(),
+        }
     }
 }
 
@@ -75,7 +85,7 @@ fn main() -> Result<(), Error> {
     let images = cli::app()
         .get_matches()
         .values_of("image")
-        .unwrap()
+        .unwrap_or_default()
         .map(Into::into)
         .collect();
     let playlist = Playlist::new(images);
