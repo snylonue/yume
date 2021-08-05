@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use walkdir::{Error, WalkDir};
 
 #[derive(Debug, Clone, Default)]
 pub struct Playlist {
@@ -19,4 +20,14 @@ impl Playlist {
             len => (self.pos as isize + d) as usize % len,
         };
     }
+}
+
+pub fn read_dir(path: &Path, sources: &mut Vec<PathBuf>) -> Result<(), Error> {
+    for entry in WalkDir::new(path).min_depth(1).into_iter() {
+        let entry = entry?;
+        if entry.file_type().is_file() {
+            sources.push(entry.path().to_owned());
+        }
+    }
+    Ok(())
 }

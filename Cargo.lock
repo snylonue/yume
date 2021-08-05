@@ -2916,4 +2916,5 @@ dependencies = [
  "clap",
  "iced",
  "iced_native",
+ "walkdir",
 ]

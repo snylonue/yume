@@ -9,3 +9,4 @@ edition = "2018"
 iced = { version = "0.3", features = ["image"] }
 iced_native = "0.4"
 clap = "2.33"
+walkdir = "2"

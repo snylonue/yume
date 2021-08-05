@@ -8,6 +8,7 @@ use iced::{
     keyboard, Application, Command, Container, Error, Settings, Text,
 };
 use iced_native::subscription;
+use playlist::read_dir;
 
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
@@ -90,12 +91,14 @@ impl Application for Yume {
 }
 
 fn main() -> Result<(), Error> {
-    let images = cli::app()
+    let mut images = Vec::new();
+    for path in cli::app()
         .get_matches()
         .values_of("image")
         .unwrap_or_default()
-        .map(Into::into)
-        .collect();
+    {
+        read_dir(path.as_ref(), &mut images).unwrap();
+    }
     let playlist = Playlist::new(images);
     Yume::run(Settings::with_flags(playlist))
 }
