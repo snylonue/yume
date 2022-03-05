@@ -1,10 +1,10 @@
 mod cli;
 mod playlist;
+mod imageview;
 
 use crate::playlist::Playlist;
 use iced::{
     executor,
-    image::{self, viewer, Viewer},
     keyboard, Application, Command, Container, Error, Settings, Text,
 };
 use iced_native::subscription;
@@ -13,7 +13,6 @@ use playlist::read_dir;
 #[derive(Debug, Clone, Default)]
 pub struct Yume {
     playlist: Playlist,
-    viewer: viewer::State,
 }
 
 #[derive(Debug, Clone)]
@@ -70,10 +69,7 @@ impl Application for Yume {
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self.playlist.current() {
-            Some(curr) => Container::new(Viewer::new(
-                &mut self.viewer,
-                image::Handle::from_path(curr),
-            ))
+            Some(curr) => Container::new(imageview::Image::new(curr))
             .width(iced::Length::Fill)
             .height(iced::Length::Fill)
             .center_x()
