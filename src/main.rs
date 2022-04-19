@@ -1,9 +1,7 @@
 mod cli;
-mod player;
 
 use std::path::Path;
-
-use player::Player;
+use yume::player::Player;
 use winit::{
     dpi::LogicalSize,
     event::{Event, VirtualKeyCode},
@@ -57,10 +55,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let size = window.inner_size();
                 pl.resize(size);
             }
+
             if input.quit() {
                 *control_flow = ControlFlow::Exit;
                 return;
             }
+
+            if input.key_pressed(VirtualKeyCode::Left){
+                pl.handle_input(VirtualKeyCode::Left);
+            }
+
+            if input.key_pressed(VirtualKeyCode::Right) {
+                pl.handle_input(VirtualKeyCode::Right);
+            }
+
             window.request_redraw();
         }
     })

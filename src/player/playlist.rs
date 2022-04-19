@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use walkdir::{Error, WalkDir};
+use crate::player::renderer::texture::Rgba8Image;
 
 #[derive(Debug, Clone, Default)]
 pub struct Playlist {
@@ -11,13 +12,19 @@ impl Playlist {
     pub fn new(sources: Vec<PathBuf>) -> Self {
         Self { sources, pos: 0 }
     }
+
     pub fn current(&self) -> Option<&PathBuf> {
         self.sources.get(self.pos)
     }
+
+    pub fn current_image(&self) -> Option<Rgba8Image> {
+        self.current().map(|p| image::open(p).unwrap().to_rgba8())
+    }
+
     pub fn advance(&mut self, d: isize) {
         self.pos = match self.sources.len() {
             0 => 0,
-            len => (self.pos as isize + d) as usize % len,
+            len => (self.pos as isize + d + len as isize) as usize % len,
         };
     }
 }

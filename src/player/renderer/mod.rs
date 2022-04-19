@@ -1,4 +1,4 @@
-mod texture;
+pub mod texture;
 
 use bytemuck::{Pod, Zeroable};
 use wgpu::{include_wgsl, util::DeviceExt, Backends, Instance};
