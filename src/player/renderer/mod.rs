@@ -4,25 +4,6 @@ use bytemuck::{Pod, Zeroable};
 use wgpu::{include_wgsl, util::DeviceExt, Backends, Instance};
 use winit::window::Window;
 
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [1.0, 1.0, 0.0],
-        tex_coords: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-1.0, 1.0, 0.0],
-        tex_coords: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-1.0, -1.0, 0.0],
-        tex_coords: [0.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, -1.0, 0.0],
-        tex_coords: [1.0, 1.0],
-    },
-];
-
 #[rustfmt::skip]
 const INDICES: &[u16] = &[
     0, 2, 3,
@@ -39,8 +20,8 @@ pub struct Renderer {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     num_indices: u32,
-    diffuse_bind_group: wgpu::BindGroup,
-    diffuse_texture: texture::Texture,
+    bind_group: wgpu::BindGroup,
+    texture: texture::Texture,
 }
 
 #[repr(C)]
@@ -166,7 +147,10 @@ impl Renderer {
         });
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("yume vertex buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
+            contents: bytemuck::cast_slice(&Vertex::compute(
+                img.dimensions(),
+                (size.width, size.height),
+            )),
             usage: wgpu::BufferUsages::VERTEX,
         });
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -185,8 +169,8 @@ impl Renderer {
             vertex_buffer,
             index_buffer,
             num_indices: INDICES.len() as u32,
-            diffuse_bind_group,
-            diffuse_texture,
+            bind_group: diffuse_bind_group,
+            texture: diffuse_texture,
         }
     }
 
@@ -278,9 +262,24 @@ impl Renderer {
                 },
                 multiview: None,
             });
-        self.diffuse_texture = texture;
-        self.diffuse_bind_group = diffuse_bind_group;
+
+        self.texture = texture;
+        self.bind_group = diffuse_bind_group;
         self.render_pipeline = render_pipeline;
+        self.reconfigure_vertex_buffer();
+    }
+
+    fn reconfigure_vertex_buffer(&mut self) {
+        self.vertex_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("yume vertex buffer"),
+                contents: bytemuck::cast_slice(&Vertex::compute(
+                    (self.texture.size.width, self.texture.size.height),
+                    (self.size.width, self.size.height),
+                )),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
     }
 
     pub fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
@@ -290,6 +289,7 @@ impl Renderer {
         self.config.width = size.width;
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
+        self.reconfigure_vertex_buffer();
     }
 
     pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
@@ -323,7 +323,7 @@ impl Renderer {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            render_pass.set_bind_group(0, &self.bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
@@ -346,5 +346,29 @@ impl Vertex {
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &Self::ATTRIBS,
         }
+    }
+
+    // (width, height)
+    pub fn compute(src: (u32, u32), dst: (u32, u32)) -> Vec<Self> {
+        let width = dst.0 as f32 / src.0 as f32;
+        let height = dst.1 as f32 / src.1 as f32;
+        vec![
+            Vertex {
+                position: [1.0, 1.0, 0.0],
+                tex_coords: [width, 0.0],
+            },
+            Vertex {
+                position: [-1.0, 1.0, 0.0],
+                tex_coords: [0.0, 0.0],
+            },
+            Vertex {
+                position: [-1.0, -1.0, 0.0],
+                tex_coords: [0.0, height],
+            },
+            Vertex {
+                position: [1.0, -1.0, 0.0],
+                tex_coords: [width, height],
+            },
+        ]
     }
 }
