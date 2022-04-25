@@ -1,7 +1,6 @@
 mod cli;
 
 use std::path::Path;
-use yume::player::Player;
 use winit::{
     dpi::LogicalSize,
     event::{Event, VirtualKeyCode},
@@ -9,6 +8,7 @@ use winit::{
     window::WindowBuilder,
 };
 use winit_input_helper::WinitInputHelper;
+use yume::player::Player;
 
 const HEIGHT: u32 = 540;
 const WIDTH: u32 = 960;
@@ -29,11 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let mut pl = pollster::block_on(async {
-        Player::new(
-            &window,
-            Path::new(args.value_of("image").unwrap())
-        )
-        .await
+        Player::new(&window, Path::new(args.value_of("image").unwrap())).await
     });
 
     event_loop.run(move |event, _, control_flow| {
@@ -61,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return;
             }
 
-            if input.key_pressed(VirtualKeyCode::Left){
+            if input.key_pressed(VirtualKeyCode::Left) {
                 pl.handle_input(VirtualKeyCode::Left);
             }
 

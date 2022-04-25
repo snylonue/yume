@@ -1,6 +1,6 @@
+use crate::player::renderer::texture::Rgba8Image;
 use std::path::{Path, PathBuf};
 use walkdir::{Error, WalkDir};
-use crate::player::renderer::texture::Rgba8Image;
 
 #[derive(Debug, Clone, Default)]
 pub struct Playlist {

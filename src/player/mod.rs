@@ -1,10 +1,10 @@
-pub mod renderer;
 pub mod playlist;
+pub mod renderer;
 
-use std::path::Path;
 use playlist::Playlist;
 use renderer::Renderer;
-use winit::{window::Window, dpi::PhysicalSize, event::VirtualKeyCode};
+use std::path::Path;
+use winit::{dpi::PhysicalSize, event::VirtualKeyCode, window::Window};
 
 pub struct Player {
     renderer: Renderer,
