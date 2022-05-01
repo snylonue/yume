@@ -47,9 +47,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         if input.update(&event) {
-            if let Some(_) = input.window_resized() {
-                let size = window.inner_size();
-                pl.resize(size);
+            if input.window_resized().is_some() || input.scale_factor_changed().is_some() {
+                pl.resize(window.inner_size());
             }
 
             if input.quit() {
