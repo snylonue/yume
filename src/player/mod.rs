@@ -28,6 +28,7 @@ impl Player {
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
+        self.renderer.scale = 1.0;
         self.renderer.resize(size);
     }
 
@@ -35,13 +36,23 @@ impl Player {
         self.renderer.size
     }
 
-    pub fn handle_input(&mut self, key: VirtualKeyCode) {
+    pub fn handle_playlist_change(&mut self, key: VirtualKeyCode) {
         match key {
             VirtualKeyCode::Left => self.playlist.advance(-1),
             VirtualKeyCode::Right => self.playlist.advance(1),
             _ => {}
         }
         let img = self.playlist.current_image().unwrap();
+        self.renderer.scale = 1.0;
         self.renderer.update_image(&img);
+    }
+
+    pub fn handle_scale_to_fit(&mut self) {
+        let src = self.renderer.surface_size();
+        let dst = self.renderer.texture_size();
+
+        let f = (src.width as f32 / dst.width as f32).min(src.height as f32 / dst.height as f32);
+        self.renderer.scale = f;
+        self.renderer.reconfigure_vertex_buffer();
     }
 }

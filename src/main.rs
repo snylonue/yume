@@ -58,11 +58,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             if input.key_pressed(VirtualKeyCode::Left) {
-                pl.handle_input(VirtualKeyCode::Left);
+                pl.handle_playlist_change(VirtualKeyCode::Left);
             }
 
             if input.key_pressed(VirtualKeyCode::Right) {
-                pl.handle_input(VirtualKeyCode::Right);
+                pl.handle_playlist_change(VirtualKeyCode::Right);
+            }
+
+            if input.key_pressed(VirtualKeyCode::S) {
+                pl.handle_scale_to_fit();
             }
 
             window.request_redraw();

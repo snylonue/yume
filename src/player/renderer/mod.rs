@@ -2,7 +2,7 @@ pub mod texture;
 
 use bytemuck::{Pod, Zeroable};
 use wgpu::{include_wgsl, util::DeviceExt, Backends, Instance};
-use winit::window::Window;
+use winit::{dpi::PhysicalSize, window::Window};
 
 #[rustfmt::skip]
 const INDICES: &[u16] = &[
@@ -23,6 +23,7 @@ pub struct Renderer {
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     pub pan: Pan,
+    pub scale: f32,
     pub render_pipeline: wgpu::RenderPipeline,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
@@ -180,6 +181,7 @@ impl Renderer {
                 img.dimensions(),
                 (size.width, size.height),
                 Pan::default(),
+                1.0,
             )),
             usage: wgpu::BufferUsages::VERTEX,
         });
@@ -196,6 +198,7 @@ impl Renderer {
             config,
             size,
             pan: Pan::default(),
+            scale: 1.0,
             render_pipeline,
             vertex_buffer,
             index_buffer,
@@ -300,7 +303,7 @@ impl Renderer {
         self.reconfigure_vertex_buffer();
     }
 
-    fn reconfigure_vertex_buffer(&mut self) {
+    pub fn reconfigure_vertex_buffer(&mut self) {
         self.vertex_buffer = self
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -309,6 +312,7 @@ impl Renderer {
                     (self.texture.size.width, self.texture.size.height),
                     (self.size.width, self.size.height),
                     self.pan,
+                    self.scale,
                 )),
                 usage: wgpu::BufferUsages::VERTEX,
             });
@@ -343,9 +347,9 @@ impl Renderer {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
                             a: 1.0,
                         }),
                         store: true,
@@ -366,6 +370,18 @@ impl Renderer {
 
         Ok(())
     }
+
+    pub fn surface_size(&self) -> PhysicalSize<u32> {
+        self.size
+    }
+
+    pub fn texture_size(&self) -> PhysicalSize<u32> {
+        let size = self.texture.size;
+        PhysicalSize {
+            width: size.width,
+            height: size.height,
+        }
+    }
 }
 
 impl Vertex {
@@ -381,16 +397,17 @@ impl Vertex {
     }
 
     // (width, height)
-    pub fn compute(src: (u32, u32), dst: (u32, u32), pan: Pan) -> Vec<Self> {
-        let width = dst.0 as f32 / src.0 as f32;
-        let height = dst.1 as f32 / src.1 as f32;
-        let mut pan_width = pan.width as f32 / src.0 as f32;
-        let mut pan_height = pan.height as f32 / src.1 as f32;
+    pub fn compute(src: (u32, u32), dst: (u32, u32), pan: Pan, scale: f32) -> Vec<Self> {
+        let src = (src.0 as f32 * scale, src.1 as f32 * scale);
+        let width = dst.0 as f32 / src.0;
+        let height = dst.1 as f32 / src.1;
+        let mut pan_width = pan.width as f32 / src.0;
+        let mut pan_height = pan.height as f32 / src.1;
         if width > 1.0 {
-            pan_width -= (dst.0 - src.0) as f32 / (2 * src.0) as f32;
+            pan_width -= (dst.0 as f32 - src.0) / (2.0 * src.0);
         }
         if height > 1.0 {
-            pan_height -= (dst.1 - src.1) as f32 / (2 * src.1) as f32;
+            pan_height -= (dst.1 as f32 - src.1) / (2.0 * src.1);
         }
         vec![
             Vertex {
