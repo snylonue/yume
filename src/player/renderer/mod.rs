@@ -78,7 +78,7 @@ impl Renderer {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
+                    features: wgpu::Features::ADDRESS_MODE_CLAMP_TO_BORDER,
                     limits: Default::default(),
                     label: None,
                 },
@@ -95,8 +95,7 @@ impl Renderer {
         };
         surface.configure(&device, &config);
 
-        let texture =
-            texture::Texture::from_image(&device, &queue, &img, Some("yume texture"));
+        let texture = texture::Texture::from_image(&device, &queue, &img, Some("yume texture"));
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -180,7 +179,7 @@ impl Renderer {
             contents: bytemuck::cast_slice(&Vertex::compute(
                 img.dimensions(),
                 (size.width, size.height),
-                Pan::default()
+                Pan::default(),
             )),
             usage: wgpu::BufferUsages::VERTEX,
         });
@@ -309,7 +308,7 @@ impl Renderer {
                 contents: bytemuck::cast_slice(&Vertex::compute(
                     (self.texture.size.width, self.texture.size.height),
                     (self.size.width, self.size.height),
-                    self.pan
+                    self.pan,
                 )),
                 usage: wgpu::BufferUsages::VERTEX,
             });
@@ -385,8 +384,14 @@ impl Vertex {
     pub fn compute(src: (u32, u32), dst: (u32, u32), pan: Pan) -> Vec<Self> {
         let width = dst.0 as f32 / src.0 as f32;
         let height = dst.1 as f32 / src.1 as f32;
-        let pan_width = pan.width as f32 / src.0 as f32;
-        let pan_height = pan.height as f32 / src.1 as f32;
+        let mut pan_width = pan.width as f32 / src.0 as f32;
+        let mut pan_height = pan.height as f32 / src.1 as f32;
+        if width > 1.0 {
+            pan_width -= (dst.0 - src.0) as f32 / (2 * src.0) as f32;
+        }
+        if height > 1.0 {
+            pan_height -= (dst.1 - src.1) as f32 / (2 * src.1) as f32;
+        }
         vec![
             Vertex {
                 position: [1.0, 1.0, 0.0],
