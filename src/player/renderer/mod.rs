@@ -10,12 +10,19 @@ const INDICES: &[u16] = &[
     0, 1, 2
 ];
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct Pan {
+    pub width: u32,
+    pub height: u32,
+}
+
 pub struct Renderer {
     pub surface: wgpu::Surface,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
+    pub pan: Pan,
     pub render_pipeline: wgpu::RenderPipeline,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
@@ -29,6 +36,29 @@ pub struct Renderer {
 pub struct Vertex {
     position: [f32; 3],
     tex_coords: [f32; 2],
+}
+
+impl Pan {
+    pub fn increase_width(&mut self, v: u32) {
+        self.width += v;
+    }
+    pub fn increase_height(&mut self, v: u32) {
+        self.height += v;
+    }
+    pub fn decrease_width(&mut self, v: u32) {
+        if self.width >= v {
+            self.width -= v;
+        } else {
+            self.width = 0
+        }
+    }
+    pub fn decrease_height(&mut self, v: u32) {
+        if self.height >= v {
+            self.height -= v;
+        } else {
+            self.height = 0
+        }
+    }
 }
 
 impl Renderer {
@@ -65,7 +95,7 @@ impl Renderer {
         };
         surface.configure(&device, &config);
 
-        let diffuse_texture =
+        let texture =
             texture::Texture::from_image(&device, &queue, &img, Some("yume texture"));
 
         let texture_bind_group_layout =
@@ -90,16 +120,16 @@ impl Renderer {
                 ],
                 label: Some("yume texture bind group layout"),
             });
-        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &texture_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+                    resource: wgpu::BindingResource::TextureView(&texture.view),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+                    resource: wgpu::BindingResource::Sampler(&texture.sampler),
                 },
             ],
             label: Some("yume diffuse bind group"),
@@ -150,6 +180,7 @@ impl Renderer {
             contents: bytemuck::cast_slice(&Vertex::compute(
                 img.dimensions(),
                 (size.width, size.height),
+                Pan::default()
             )),
             usage: wgpu::BufferUsages::VERTEX,
         });
@@ -165,12 +196,13 @@ impl Renderer {
             queue,
             config,
             size,
+            pan: Pan::default(),
             render_pipeline,
             vertex_buffer,
             index_buffer,
             num_indices: INDICES.len() as u32,
-            bind_group: diffuse_bind_group,
-            texture: diffuse_texture,
+            bind_group,
+            texture,
         }
     }
 
@@ -277,6 +309,7 @@ impl Renderer {
                 contents: bytemuck::cast_slice(&Vertex::compute(
                     (self.texture.size.width, self.texture.size.height),
                     (self.size.width, self.size.height),
+                    self.pan
                 )),
                 usage: wgpu::BufferUsages::VERTEX,
             });
@@ -349,25 +382,27 @@ impl Vertex {
     }
 
     // (width, height)
-    pub fn compute(src: (u32, u32), dst: (u32, u32)) -> Vec<Self> {
+    pub fn compute(src: (u32, u32), dst: (u32, u32), pan: Pan) -> Vec<Self> {
         let width = dst.0 as f32 / src.0 as f32;
         let height = dst.1 as f32 / src.1 as f32;
+        let pan_width = pan.width as f32 / src.0 as f32;
+        let pan_height = pan.height as f32 / src.1 as f32;
         vec![
             Vertex {
                 position: [1.0, 1.0, 0.0],
-                tex_coords: [width, 0.0],
+                tex_coords: [width + pan_width, pan_height],
             },
             Vertex {
                 position: [-1.0, 1.0, 0.0],
-                tex_coords: [0.0, 0.0],
+                tex_coords: [pan_width, pan_height],
             },
             Vertex {
                 position: [-1.0, -1.0, 0.0],
-                tex_coords: [0.0, height],
+                tex_coords: [pan_width, height + pan_height],
             },
             Vertex {
                 position: [1.0, -1.0, 0.0],
-                tex_coords: [width, height],
+                tex_coords: [width + pan_width, height + pan_height],
             },
         ]
     }
