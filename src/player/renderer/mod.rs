@@ -28,6 +28,7 @@ pub struct Renderer {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     num_indices: u32,
+    texture_bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
     texture: texture::Texture,
 }
@@ -183,7 +184,7 @@ impl Renderer {
                 Pan::default(),
                 1.0,
             )),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("yume index buffer"),
@@ -203,6 +204,7 @@ impl Renderer {
             vertex_buffer,
             index_buffer,
             num_indices: INDICES.len() as u32,
+            texture_bind_group_layout,
             bind_group,
             texture,
         }
@@ -212,31 +214,8 @@ impl Renderer {
         let texture =
             texture::Texture::from_image(&self.device, &self.queue, img, Some("yume texture"));
 
-        let texture_bind_group_layout =
-            self.device
-                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    entries: &[
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 0,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
-                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                                view_dimension: wgpu::TextureViewDimension::D2,
-                                multisampled: false,
-                            },
-                            count: None,
-                        },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 1,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                            count: None,
-                        },
-                    ],
-                    label: Some("yume texture bind group layout"),
-                });
-        let diffuse_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &texture_bind_group_layout,
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.texture_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -250,72 +229,18 @@ impl Renderer {
             label: Some("yume diffuse bind group"),
         });
 
-        let shader = self
-            .device
-            .create_shader_module(&include_wgsl!("../../../shaders/shader.wgsl"));
-        let pipeline_layout = self
-            .device
-            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("yume pipeline layout"),
-                bind_group_layouts: &[&texture_bind_group_layout],
-                push_constant_ranges: &[],
-            });
-        let render_pipeline = self
-            .device
-            .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("yume pipeline"),
-                layout: Some(&pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: &shader,
-                    entry_point: "vs_main",
-                    buffers: &[Vertex::desc()],
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &shader,
-                    entry_point: "fs_main",
-                    targets: &[wgpu::ColorTargetState {
-                        format: self.config.format,
-                        blend: Some(wgpu::BlendState::REPLACE),
-                        write_mask: wgpu::ColorWrites::ALL,
-                    }],
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList,
-                    strip_index_format: None,
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: Some(wgpu::Face::Back),
-                    unclipped_depth: false,
-                    polygon_mode: wgpu::PolygonMode::Fill,
-                    conservative: false,
-                },
-                depth_stencil: None,
-                multisample: wgpu::MultisampleState {
-                    count: 1,
-                    mask: !0,
-                    alpha_to_coverage_enabled: false,
-                },
-                multiview: None,
-            });
-
         self.texture = texture;
-        self.bind_group = diffuse_bind_group;
-        self.render_pipeline = render_pipeline;
+        self.bind_group = bind_group;
         self.reconfigure_vertex_buffer();
     }
 
     pub fn reconfigure_vertex_buffer(&mut self) {
-        self.vertex_buffer = self
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("yume vertex buffer"),
-                contents: bytemuck::cast_slice(&Vertex::compute(
-                    (self.texture.size.width, self.texture.size.height),
-                    (self.size.width, self.size.height),
-                    self.pan,
-                    self.scale,
-                )),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
+        self.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&Vertex::compute(
+            (self.texture.size.width, self.texture.size.height),
+            (self.size.width, self.size.height),
+            self.pan,
+            self.scale,
+        )));
     }
 
     pub fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
