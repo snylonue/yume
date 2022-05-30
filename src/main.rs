@@ -4,12 +4,13 @@ use std::path::Path;
 use winit::{
     dpi::LogicalSize,
     event_loop::EventLoop,
-    window::WindowBuilder,
+    window::{WindowBuilder, Icon},
 };
 use yume::player::Player;
 
 const HEIGHT: u32 = 540;
 const WIDTH: u32 = 960;
+const ICON_BYTES: &[u8] = include_bytes!("../assets/icon.png");
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::app().get_matches();
@@ -21,6 +22,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         WindowBuilder::new()
             .with_title("yume")
             .with_inner_size(size)
+            .with_window_icon(Some({
+                let icon = image::load_from_memory(ICON_BYTES)?.to_rgba8();
+                Icon::from_rgba(icon.to_vec(), icon.width(), icon.height())?
+            }))
             .build(&event_loop)
             .unwrap()
     };
