@@ -12,8 +12,8 @@ const INDICES: &[u16] = &[
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Pan {
-    pub width: u32,
-    pub height: u32,
+    pub width: i32,
+    pub height: i32,
 }
 
 pub struct Renderer {
@@ -41,25 +41,11 @@ pub struct Vertex {
 }
 
 impl Pan {
-    pub fn increase_width(&mut self, v: u32) {
+    pub fn increase_width(&mut self, v: i32) {
         self.width += v;
     }
-    pub fn increase_height(&mut self, v: u32) {
+    pub fn increase_height(&mut self, v: i32) {
         self.height += v;
-    }
-    pub fn decrease_width(&mut self, v: u32) {
-        if self.width >= v {
-            self.width -= v;
-        } else {
-            self.width = 0
-        }
-    }
-    pub fn decrease_height(&mut self, v: u32) {
-        if self.height >= v {
-            self.height -= v;
-        } else {
-            self.height = 0
-        }
     }
 }
 

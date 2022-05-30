@@ -92,7 +92,7 @@ impl Player {
         }
 
         if self.input.key_pressed(VirtualKeyCode::L) {
-            self.renderer.pan.decrease_width(1);
+            self.renderer.pan.increase_width(-1);
             self.renderer.reconfigure_vertex_buffer();
         }
 
@@ -102,13 +102,14 @@ impl Player {
         }
 
         if self.input.key_pressed(VirtualKeyCode::K) {
-            self.renderer.pan.decrease_height(1);
+            self.renderer.pan.increase_height(-1);
             self.renderer.reconfigure_vertex_buffer();
         }
     }
 
     fn update_image(&mut self) {
         let img = self.playlist.current_image().unwrap();
+        self.renderer.pan = Pan::default();
         self.renderer.scale = 1.0;
         self.renderer.update_image(&img);
     }
