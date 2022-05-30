@@ -293,6 +293,15 @@ impl Renderer {
             height: size.height,
         }
     }
+
+    pub fn add_scale(&mut self, d: f32) {
+        self.set_scale(self.scale + d);
+    }
+
+    pub fn set_scale(&mut self, v: f32) {
+        self.scale = v.max(f32::EPSILON);
+        self.reconfigure_vertex_buffer();
+    }
 }
 
 impl Vertex {

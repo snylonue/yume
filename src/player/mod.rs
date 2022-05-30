@@ -105,6 +105,19 @@ impl Player {
             self.renderer.pan.increase_height(-1);
             self.renderer.reconfigure_vertex_buffer();
         }
+
+        if self.input.mouse_held(0) {
+            let (dx, dy) = self.input.mouse_diff();
+            self.renderer.pan.increase_width(-dx as i32);
+            self.renderer.pan.increase_height(-dy as i32);
+            self.renderer.reconfigure_vertex_buffer();
+        }
+
+        let scroll_diff = self.input.scroll_diff();
+        if scroll_diff.abs() >= f32::EPSILON {
+            // todo: multiply a factor set by user
+            self.renderer.add_scale(scroll_diff * 0.1);
+        }
     }
 
     fn update_image(&mut self) {
@@ -119,7 +132,6 @@ impl Player {
         let dst = self.renderer.texture_size();
 
         let f = (src.width as f32 / dst.width as f32).min(src.height as f32 / dst.height as f32);
-        self.renderer.scale = f;
-        self.renderer.reconfigure_vertex_buffer();
+        self.renderer.set_scale(f);
     }
 }
