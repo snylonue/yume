@@ -30,7 +30,7 @@ impl Playlist {
 }
 
 pub fn read_dir(path: &Path, sources: &mut Vec<PathBuf>) -> Result<(), Error> {
-    for entry in WalkDir::new(path).min_depth(1).into_iter() {
+    for entry in WalkDir::new(path) {
         let entry = entry?;
         if entry.file_type().is_file() {
             sources.push(entry.path().to_owned());
