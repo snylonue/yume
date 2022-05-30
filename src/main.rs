@@ -3,11 +3,9 @@ mod cli;
 use std::path::Path;
 use winit::{
     dpi::LogicalSize,
-    event::{Event, VirtualKeyCode},
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::EventLoop,
     window::WindowBuilder,
 };
-use winit_input_helper::WinitInputHelper;
 use yume::player::Player;
 
 const HEIGHT: u32 = 540;
@@ -17,7 +15,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::app().get_matches();
 
     let event_loop = EventLoop::new();
-    let mut input = WinitInputHelper::new();
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         // let scaled_size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
@@ -28,47 +25,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap()
     };
 
-    let mut pl = pollster::block_on(async {
-        Player::new(&window, Path::new(args.value_of("image").unwrap())).await
+    let pl = pollster::block_on(async {
+        Player::new(window, Path::new(args.value_of("image").unwrap())).await
     });
 
-    event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Wait;
-        if let Event::RedrawRequested(_) = event {
-            match pl.render() {
-                Ok(_) => {}
-                // Reconfigure the surface if lost
-                Err(wgpu::SurfaceError::Lost) => pl.resize(pl.size()),
-                // The system is out of memory, we should probably quit
-                Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                // All other errors (Outdated, Timeout) should be resolved by the next frame
-                Err(e) => eprintln!("{:?}", e),
-            }
-        }
-
-        if input.update(&event) {
-            if input.window_resized().is_some() || input.scale_factor_changed().is_some() {
-                pl.resize(window.inner_size());
-            }
-
-            if input.quit() {
-                *control_flow = ControlFlow::Exit;
-                return;
-            }
-
-            if input.key_pressed(VirtualKeyCode::Left) {
-                pl.handle_playlist_change(VirtualKeyCode::Left);
-            }
-
-            if input.key_pressed(VirtualKeyCode::Right) {
-                pl.handle_playlist_change(VirtualKeyCode::Right);
-            }
-
-            if input.key_pressed(VirtualKeyCode::S) {
-                pl.handle_scale_to_fit();
-            }
-
-            window.request_redraw();
-        }
-    })
+    pl.run(event_loop)
 }
