@@ -4,7 +4,7 @@ use std::path::Path;
 use winit::{
     dpi::LogicalSize,
     event_loop::EventLoop,
-    window::{WindowBuilder, Icon},
+    window::{Icon, WindowBuilder},
 };
 use yume::player::Player;
 
@@ -18,7 +18,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let event_loop = EventLoop::new();
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
-        // let scaled_size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         WindowBuilder::new()
             .with_title("yume")
             .with_inner_size(size)
@@ -26,8 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let icon = image::load_from_memory(ICON_BYTES)?.to_rgba8();
                 Icon::from_rgba(icon.to_vec(), icon.width(), icon.height())?
             }))
-            .build(&event_loop)
-            .unwrap()
+            .build(&event_loop)?
     };
 
     let pl = pollster::block_on(async {

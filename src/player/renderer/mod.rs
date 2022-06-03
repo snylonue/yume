@@ -83,7 +83,7 @@ impl Renderer {
         };
         surface.configure(&device, &config);
 
-        let texture = texture::Texture::from_image(&device, &queue, &img, Some("yume texture"));
+        let texture = texture::Texture::from_image(&device, &queue, img, Some("yume texture"));
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -221,12 +221,16 @@ impl Renderer {
     }
 
     pub fn reconfigure_vertex_buffer(&mut self) {
-        self.queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&Vertex::compute(
-            (self.texture.size.width, self.texture.size.height),
-            (self.size.width, self.size.height),
-            self.pan,
-            self.scale,
-        )));
+        self.queue.write_buffer(
+            &self.vertex_buffer,
+            0,
+            bytemuck::cast_slice(&Vertex::compute(
+                (self.texture.size.width, self.texture.size.height),
+                (self.size.width, self.size.height),
+                self.pan,
+                self.scale,
+            )),
+        );
     }
 
     pub fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
