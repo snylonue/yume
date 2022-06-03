@@ -27,6 +27,12 @@ impl Playlist {
             len => (self.pos as isize + d + len as isize) as usize % len,
         };
     }
+
+    pub fn load(&mut self, p: &Path) -> Result<(), Error> {
+        self.sources.clear();
+        self.pos = 0;
+        read_dir(p, &mut self.sources)
+    }
 }
 
 pub fn read_dir(path: &Path, sources: &mut Vec<PathBuf>) -> Result<(), Error> {
