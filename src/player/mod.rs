@@ -54,6 +54,7 @@ impl Player {
                     ..
                 } => {
                     self.playlist.load(path).unwrap();
+                    self.update_image();
                 }
                 _ => {}
             }
