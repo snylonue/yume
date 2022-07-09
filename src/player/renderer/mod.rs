@@ -50,6 +50,10 @@ impl Pan {
 }
 
 impl Renderer {
+    pub async fn idle(window: &Window) -> Self {
+        Self::new(window, &texture::Rgba8Image::new(1, 1)).await
+    }
+
     pub async fn new(window: &Window, img: &texture::Rgba8Image) -> Self {
         let size = window.inner_size();
 

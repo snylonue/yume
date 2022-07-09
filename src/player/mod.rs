@@ -1,9 +1,9 @@
 pub mod playlist;
 pub mod renderer;
 
+use clap::ArgMatches;
 use playlist::Playlist;
 use renderer::{Pan, Renderer};
-use std::path::Path;
 use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent},
@@ -11,7 +11,6 @@ use winit::{
     window::Window,
 };
 use winit_input_helper::WinitInputHelper;
-
 pub struct Player {
     renderer: Renderer,
     playlist: Playlist,
@@ -20,13 +19,22 @@ pub struct Player {
 }
 
 impl Player {
-    pub async fn new(window: Window, p: &Path) -> Self {
-        let mut sources = Vec::new();
-        playlist::read_dir(p, &mut sources).unwrap();
-        let playlist = Playlist::new(sources);
-        let init_image = playlist.current().unwrap();
-        let img = image::open(init_image).unwrap().to_rgba8();
-        let renderer = Renderer::new(&window, &img).await;
+    pub async fn new(window: Window, arg: ArgMatches<'_>) -> Self {
+        let (playlist, renderer) = match arg.value_of("image") {
+            Some(p) => {
+                let mut sources = Vec::new();
+                playlist::read_dir(p.as_ref(), &mut sources).unwrap();
+                let playlist = Playlist::new(sources);
+                let init_image = playlist.current().unwrap();
+                let img = image::open(init_image).unwrap().to_rgba8();
+                let renderer = Renderer::new(&window, &img).await;
+                (playlist, renderer)
+            }
+            None => {
+                let playlist = Playlist::new(vec![]);
+                (playlist, Renderer::idle(&window).await)
+            }
+        };
 
         Self {
             renderer,

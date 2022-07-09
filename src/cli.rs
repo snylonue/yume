@@ -6,6 +6,6 @@ pub fn app() -> App<'static, 'static> {
         Arg::with_name("image")
             .help("image to open")
             .multiple(true)
-            .required(true),
+            .required(false),
     )
 }

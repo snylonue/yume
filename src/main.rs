@@ -1,6 +1,5 @@
 mod cli;
 
-use std::path::Path;
 use winit::{
     dpi::LogicalSize,
     event_loop::EventLoop,
@@ -28,9 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .build(&event_loop)?
     };
 
-    let pl = pollster::block_on(async {
-        Player::new(window, Path::new(args.value_of("image").unwrap())).await
-    });
+    let pl = pollster::block_on(async { Player::new(window, args).await });
 
     pl.run(event_loop)
 }
