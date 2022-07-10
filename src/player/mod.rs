@@ -3,7 +3,7 @@ pub mod renderer;
 
 use clap::ArgMatches;
 use playlist::Playlist;
-use renderer::{Pan, Renderer};
+use renderer::{Pan, Renderer, texture::Rgba8Image};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent},
@@ -11,6 +11,7 @@ use winit::{
     window::Window,
 };
 use winit_input_helper::WinitInputHelper;
+
 pub struct Player {
     renderer: Renderer,
     playlist: Playlist,
@@ -149,7 +150,10 @@ impl Player {
     }
 
     fn update_image(&mut self) {
-        let img = self.playlist.current_image().unwrap();
+        let img = match self.playlist.current_image() {
+            Some(img) => img,
+            None => Rgba8Image::new(1, 1),
+        };
         self.renderer.pan = Pan::default();
         self.renderer.scale = 1.0;
         self.renderer.update_image(&img);
