@@ -155,8 +155,8 @@ impl Player {
             None => Rgba8Image::new(1, 1),
         };
         self.renderer.pan = Pan::default();
-        self.renderer.scale = 1.0;
         self.renderer.update_image(&img);
+        self.handle_scale_to_fit();
     }
 
     pub fn handle_scale_to_fit(&mut self) {
