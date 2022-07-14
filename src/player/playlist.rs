@@ -1,6 +1,9 @@
-use crate::player::renderer::texture::Rgba8Image;
+pub mod handler;
+
 use std::path::{Path, PathBuf};
 use walkdir::{Error, WalkDir};
+
+pub use handler::Playlist;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pos {
@@ -42,46 +45,6 @@ impl Pos {
 impl Default for Pos {
     fn default() -> Self {
         Self::Start
-    }
-}
-
-pub enum Entry {
-    Item(PathBuf),
-    SubList(Playlist)
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Playlist {
-    pub sources: Vec<PathBuf>,
-    pub pos: Pos,
-}
-
-impl Playlist {
-    pub fn new(sources: Vec<PathBuf>) -> Self {
-        Self { sources, pos: Pos::Start }
-    }
-
-    pub fn current(&self) -> Option<&PathBuf> {
-        self.sources.get(self.pos.to_index()?)
-    }
-
-    pub fn current_image(&self) -> Option<Rgba8Image> {
-        self.current().map(|p| image::open(p).unwrap().to_rgba8())
-    }
-
-    pub fn advance(&mut self, d: isize) {
-        self.pos.advance(d, self.sources.len())
-    }
-
-    pub fn load(&mut self, p: &Path) -> Result<(), Error> {
-        self.sources.clear();
-        read_dir(p, &mut self.sources)?;
-        self.pos = if self.sources.is_empty() {
-            Pos::Start
-        } else {
-            Pos::Normal(0)
-        };
-        Ok(())
     }
 }
 

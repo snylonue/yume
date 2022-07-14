@@ -26,8 +26,7 @@ impl Player {
                 let mut sources = Vec::new();
                 playlist::read_dir(p.as_ref(), &mut sources).unwrap();
                 let playlist = Playlist::new(sources);
-                let init_image = playlist.current().unwrap();
-                let img = image::open(init_image).unwrap().to_rgba8();
+                let img = playlist.current_image().unwrap();
                 let renderer = Renderer::new(&window, &img).await;
                 (playlist, renderer)
             }
@@ -62,7 +61,7 @@ impl Player {
                     event: WindowEvent::DroppedFile(path),
                     ..
                 } => {
-                    self.playlist.load(path).unwrap();
+                    self.playlist.load_path(path).unwrap();
                     self.update_image();
                 }
                 _ => {}
@@ -151,8 +150,8 @@ impl Player {
 
     fn update_image(&mut self) {
         let img = match self.playlist.current_image() {
-            Some(img) => img,
-            None => Rgba8Image::new(1, 1),
+            Ok(img) => img,
+            _ => Rgba8Image::new(1, 1),
         };
         self.renderer.pan = Pan::default();
         self.renderer.update_image(&img);
