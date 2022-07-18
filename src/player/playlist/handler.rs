@@ -66,6 +66,10 @@ pub trait Parser {
 
 impl Parser for Path {
     fn parse(&self) -> Result<Vec<Box<dyn Handler>>> {
+        if self.is_file() {
+            return Ok(vec![Box::new(self.to_path_buf())]);
+        }
+
         let mut p: Vec<Box<dyn Handler>> = Vec::new();
         for entry in WalkDir::new(self).max_depth(1).min_depth(1) {
             let entry = entry?;
