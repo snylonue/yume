@@ -3,7 +3,7 @@ pub mod renderer;
 
 use clap::ArgMatches;
 use playlist::Playlist;
-use renderer::{Pan, Renderer, texture::Rgba8Image};
+use renderer::{texture::Rgba8Image, Pan, Renderer};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, VirtualKeyCode, WindowEvent},
@@ -155,14 +155,17 @@ impl Player {
         };
         self.renderer.pan = Pan::default();
         self.renderer.update_image(&img);
-        self.handle_scale_to_fit();
+        self.renderer.set_scale(self.scale_to_fit().min(1f32))
     }
 
-    pub fn handle_scale_to_fit(&mut self) {
+    fn scale_to_fit(&self) -> f32 {
         let src = self.renderer.surface_size();
         let dst = self.renderer.texture_size();
 
-        let f = (src.width as f32 / dst.width as f32).min(src.height as f32 / dst.height as f32);
-        self.renderer.set_scale(f);
+        (src.width as f32 / dst.width as f32).min(src.height as f32 / dst.height as f32)
+    }
+
+    pub fn handle_scale_to_fit(&mut self) {
+        self.renderer.set_scale(self.scale_to_fit());
     }
 }
