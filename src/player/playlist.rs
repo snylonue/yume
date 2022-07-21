@@ -30,7 +30,7 @@ impl Pos {
                 } else {
                     Self::Normal(new_pos as usize)
                 };
-            },
+            }
             _ => {}
         }
     }

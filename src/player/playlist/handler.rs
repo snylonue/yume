@@ -1,14 +1,17 @@
-use std::{path::{PathBuf, Path}, fmt::Debug};
-use walkdir::WalkDir;
-use crate::Rgba8Image;
 use super::Pos;
+use crate::Rgba8Image;
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
+use walkdir::WalkDir;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
 pub struct Playlist {
     pub(crate) items: Vec<Box<dyn Handler>>,
-    pub(crate) pos: Pos
+    pub(crate) pos: Pos,
 }
 
 impl Playlist {
@@ -25,8 +28,8 @@ impl Playlist {
         Self { items, pos }
     }
 
-    fn current(&self) -> Option<&Box<dyn Handler>> {
-        self.items.get(self.pos.to_index()?)
+    fn current(&self) -> Option<&dyn Handler> {
+        self.items.get(self.pos.to_index()?).map(AsRef::as_ref)
     }
 
     pub fn current_image(&self) -> Result<Rgba8Image> {
